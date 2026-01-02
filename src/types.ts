@@ -88,26 +88,23 @@ export interface Env {
   JWT_SECRET?: string;
 }
 
-export interface LunarDate {
-  lunarYear: number;
-  lunarMonth: number;
-  lunarDay: number;
-  isLeap: boolean;
-  solarDate: string; // YYYY-MM-DD
-}
-
-export interface DebugInfo {
-  timestamp: string;
-}
-
 export interface User {
   username: string;
   iat: number;
 }
+
+export interface DebugInfo {
+  timestamp: string;
   pathname: string;
   kvBinding: boolean;
   configExists: boolean;
   adminUsername: string;
   hasJwtSecret: boolean;
   jwtSecretLength: number;
+}
+
+export interface KVNamespace {
+  get(key: string): Promise<string | null>;
+  put(key: string, value: string): Promise<void>;
+  delete(key: string): Promise<void>;
 }

@@ -1,17 +1,18 @@
 import { getConfig } from '../utils/config';
+import { Env } from '../types';
 
 export async function handleDebugRequest(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   try {
     const config = await getConfig(env);
     const debugInfo = {
-      timestamp: new Date().toISOString(), // 使用UTC时间戳
+      timestamp: new Date().toISOString(),
       pathname: url.pathname,
       kvBinding: !!env.SUBSCRIPTIONS_KV,
       configExists: !!config,
-      adminUsername: config.ADMIN_USERNAME,
-      hasJwtSecret: !!config.JWT_SECRET,
-      jwtSecretLength: config.JWT_SECRET ? config.JWT_SECRET.length : 0
+      adminUsername: config.adminUsername || '',
+      hasJwtSecret: !!config.jwtSecret,
+      jwtSecretLength: config.jwtSecret ? config.jwtSecret.length : 0
     };
 
     return new Response(`

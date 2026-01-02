@@ -241,6 +241,11 @@ export function daysToLunar(lunar: { year: number, month: number, day: number, i
   
   return Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
-
+ 
 // 导出原始对象以保持兼容性（如果需要）
 export { lunarCalendar };
+
+export const lunarBiz = {
+  lunar2solar,
+  addLunarPeriod
+};
