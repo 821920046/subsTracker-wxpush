@@ -181,6 +181,13 @@ export const adminPage = `
               <option value="expired">已过期</option>
               <option value="inactive">已停用</option>
             </select>
+            <button id="exportCsvBtn" class="px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100" title="导出CSV">
+              导出CSV
+            </button>
+            <label class="px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 cursor-pointer" title="导入CSV">
+              导入CSV
+              <input id="importCsvInput" type="file" accept=".csv,text/csv" class="hidden">
+            </label>
           </div>
           <button onclick="openModal()" class="btn-primary px-4 py-2 rounded-lg text-white text-sm font-medium shadow-md flex items-center">
             <i class="fas fa-plus mr-2"></i>添加订阅
@@ -630,6 +637,160 @@ export const adminPage = `
     let sortKey = 'expiryDate';
     let sortDir = 'asc';
     let filterKey = 'all';
+    
+    function toCSVRow(values) {
+      return values.map(v => {
+        if (v === undefined || v === null) return '';
+        const s = String(v);
+        const needQuote = s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r');
+        const escaped = s.replace(/"/g, '""');
+        return needQuote ? '"' + escaped + '"' : escaped;
+      }).join(',');
+    }
+    
+    function exportCSV() {
+      const header = ['name','customType','startDate','expiryDate','periodValue','periodUnit','price','reminderDays','notes','isActive','autoRenew','useLunar'];
+      const rows = [toCSVRow(header)];
+      subscriptions.forEach(s => {
+        rows.push(toCSVRow([
+          s.name || '',
+          s.customType || '',
+          s.startDate ? s.startDate.split('T')[0] : '',
+          s.expiryDate ? s.expiryDate.split('T')[0] : '',
+          s.periodValue !== undefined ? s.periodValue : '',
+          s.periodUnit || '',
+          s.price !== undefined ? s.price : '',
+          s.reminderDays !== undefined ? s.reminderDays : '',
+          s.notes || '',
+          s.isActive ? 'true' : 'false',
+          s.autoRenew ? 'true' : 'false',
+          s.useLunar ? 'true' : 'false'
+        ]));
+      });
+      const csv = rows.join('\r\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'subscriptions.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('已导出CSV', 'success');
+    }
+    
+    function parseCSV(text) {
+      const lines = [];
+      let i = 0;
+      while (i < text.length) {
+        let row = [];
+        let field = '';
+        let inQuotes = false;
+        let ended = false;
+        while (i < text.length && !ended) {
+          const ch = text[i++];
+          if (inQuotes) {
+            if (ch === '"') {
+              if (i < text.length && text[i] === '"') {
+                field += '"';
+                i++;
+              } else {
+                inQuotes = false;
+              }
+            } else {
+              field += ch;
+            }
+          } else {
+            if (ch === '"') {
+              inQuotes = true;
+            } else if (ch === ',') {
+              row.push(field);
+              field = '';
+            } else if (ch === '\r') {
+              if (i < text.length && text[i] === '\n') i++;
+              row.push(field);
+              field = '';
+              ended = true;
+            } else if (ch === '\n') {
+              row.push(field);
+              field = '';
+              ended = true;
+            } else {
+              field += ch;
+            }
+          }
+        }
+        if (!ended) {
+          row.push(field);
+        }
+        if (row.length > 1 || (row.length === 1 && row[0].trim().length > 0)) {
+          lines.push(row);
+        }
+      }
+      return lines;
+    }
+    
+    async function importCSVFile(file) {
+      try {
+        const text = await file.text();
+        const rows = parseCSV(text);
+        if (rows.length === 0) {
+          showToast('CSV为空', 'error');
+          return;
+        }
+        const header = rows[0].map(h => h.trim());
+        const index = (name) => header.findIndex(h => h.toLowerCase() === name.toLowerCase());
+        const requiredName = index('name');
+        const requiredExpiry = index('expiryDate');
+        if (requiredName < 0 || requiredExpiry < 0) {
+          showToast('缺少必填列: name 或 expiryDate', 'error');
+          return;
+        }
+        let ok = 0, fail = 0;
+        for (let r = 1; r < rows.length; r++) {
+          const row = rows[r];
+          const get = (col) => {
+            const idx = index(col);
+            if (idx < 0 || idx >= row.length) return undefined;
+            const v = row[idx].trim();
+            return v.length ? v : undefined;
+          };
+          const name = get('name');
+          const expiryDate = get('expiryDate');
+          if (!name || !expiryDate) { fail++; continue; }
+          const data = {
+            name,
+            customType: get('customType'),
+            startDate: get('startDate'),
+            expiryDate,
+            periodValue: get('periodValue') ? parseInt(get('periodValue')) : undefined,
+            periodUnit: get('periodUnit') || 'month',
+            price: get('price') ? parseFloat(get('price')) : undefined,
+            reminderDays: get('reminderDays') ? parseInt(get('reminderDays')) : undefined,
+            notes: get('notes'),
+            isActive: get('isActive') ? (get('isActive').toLowerCase() === 'true') : true,
+            autoRenew: get('autoRenew') ? (get('autoRenew').toLowerCase() === 'true') : true,
+            useLunar: get('useLunar') ? (get('useLunar').toLowerCase() === 'true') : false
+          };
+          try {
+            const res = await fetch('/api/subscriptions', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if (result.success) ok++; else fail++;
+          } catch (e) {
+            fail++;
+          }
+        }
+        showToast('导入完成: 成功 ' + ok + ' 条，失败 ' + fail + ' 条', fail === 0 ? 'success' : 'info');
+        loadSubscriptions();
+      } catch (e) {
+        showToast('导入失败', 'error');
+      }
+    }
 
     // Load Subscriptions
     async function loadSubscriptions() {
@@ -1055,6 +1216,14 @@ export const adminPage = `
       if (filterEl) filterEl.addEventListener('change', (e) => {
         filterKey = e.target.value;
         renderSubscriptions();
+      });
+      const exportBtn = document.getElementById('exportCsvBtn');
+      if (exportBtn) exportBtn.addEventListener('click', exportCSV);
+      const importInput = document.getElementById('importCsvInput');
+      if (importInput) importInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (file) importCSVFile(file);
+        e.target.value = '';
       });
       
       // Timezone check
