@@ -2,12 +2,14 @@
 export const adminPage = `
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>订阅管理系统</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订阅管理系统</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
   <style>
     /* Custom Styles */
     .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); transition: all 0.3s; }
@@ -118,7 +120,7 @@ export const adminPage = `
     </div>
   </nav>
 
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style="content-visibility:auto; contain-intrinsic-size: 1000px;">
     <!-- Dashboard Stats -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
       <div class="bg-white rounded-xl shadow-sm p-6 card-hover flex items-center justify-between">
@@ -783,6 +785,7 @@ export const adminPage = `
             const res = await fetch('/api/subscriptions', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
               body: JSON.stringify(data)
             });
             const result = await res.json();
@@ -804,7 +807,7 @@ export const adminPage = `
       tbody.innerHTML = '<tr><td colspan="8" class="text-center py-10"><i class="fas fa-spinner fa-spin mr-2"></i>加载中...</td></tr>';
       
       try {
-        const res = await fetch('/api/subscriptions');
+        const res = await fetch('/api/subscriptions', { credentials: 'include' });
         subscriptions = await res.json();
         
         renderSubscriptions();
@@ -1080,7 +1083,7 @@ export const adminPage = `
       try {
         const url = id ? '/api/subscriptions/' + id : '/api/subscriptions';
         const method = id ? 'PUT' : 'POST';
-        const res = await fetch(url, { method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+        const res = await fetch(url, { method, headers: {'Content-Type': 'application/json'}, credentials: 'include', body: JSON.stringify(data) });
         const result = await res.json();
         
         if (result.success || res.status === 200 || res.status === 201) {
@@ -1102,7 +1105,7 @@ export const adminPage = `
     async function deleteSubscription(id) {
       if (!confirm('确定要删除吗？')) return;
       try {
-        const res = await fetch('/api/subscriptions/' + id, { method: 'DELETE' });
+        const res = await fetch('/api/subscriptions/' + id, { method: 'DELETE', credentials: 'include' });
         const result = await res.json();
         if (result.success || res.ok) {
           showToast('删除成功', 'success');
@@ -1120,6 +1123,7 @@ export const adminPage = `
         const res = await fetch('/api/subscriptions/' + id + '/toggle-status', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ isActive })
         });
         const result = await res.json();
@@ -1137,7 +1141,7 @@ export const adminPage = `
     async function testNotify(id) {
         try {
             showToast('发送测试通知...', 'info');
-            const res = await fetch('/api/subscriptions/' + id + '/test-notify', { method: 'POST' });
+            const res = await fetch('/api/subscriptions/' + id + '/test-notify', { method: 'POST', credentials: 'include' });
             const result = await res.json();
             if (result.success) {
                 showToast('测试通知已发送', 'success');

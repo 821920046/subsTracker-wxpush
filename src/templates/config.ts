@@ -1,12 +1,14 @@
 export const configPage = `
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>系统配置 - 订阅管理系统</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统配置 - 订阅管理系统</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
   <style>
     .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); transition: all 0.3s; }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); }
@@ -34,10 +36,7 @@ export const configPage = `
       background-color: #f8fafc; 
       border-color: #6366f1; 
     }
-    .config-section.inactive { 
-      background-color: #f9fafb; 
-      opacity: 0.7; 
-    }
+    .config-section.inactive { display: none; }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -439,7 +438,7 @@ export const configPage = `
     
     async function loadConfig() {
       try {
-        const response = await fetch('/api/config');
+        const response = await fetch('/api/config', { credentials: 'include' });
         const config = await response.json();
         
         document.getElementById('adminUsername').value = config.ADMIN_USERNAME || '';
@@ -637,6 +636,7 @@ export const configPage = `
         const response = await fetch('/api/config', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(config)
         });
 
@@ -786,6 +786,7 @@ export const configPage = `
         const response = await fetch('/api/test-notification', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ type: type, ...config })
         });
         if (response.ok) {
@@ -851,7 +852,7 @@ export const configPage = `
     async function showSystemTime() {
       try {
         // 获取后台配置的时区
-        const response = await fetch('/api/config');
+        const response = await fetch('/api/config', { credentials: 'include' });
         const config = await response.json();
         globalTimezone = config.TIMEZONE || 'UTC';
         
@@ -921,7 +922,7 @@ export const configPage = `
         // 定期检查时区变化并重新加载订阅列表（每30秒检查一次）
         setInterval(async () => {
           try {
-            const response = await fetch('/api/config');
+            const response = await fetch('/api/config', { credentials: 'include' });
             const config = await response.json();
             const newTimezone = config.TIMEZONE || 'UTC';
             
