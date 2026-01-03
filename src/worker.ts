@@ -369,7 +369,7 @@ async function handleApiRequest(request: Request, env: Env): Promise<Response> {
         
         return new Response(JSON.stringify({ success, message: success ? '发送成功' : '发送失败' }), { headers: { 'Content-Type': 'application/json' } });
     } catch (error: any) {
-        return new Response(JSON.stringify({ success: false, message: error.message }), { status: 500 });
+        return new Response(JSON.stringify({ success: false, message: error?.message || '未知错误' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
   }
 
