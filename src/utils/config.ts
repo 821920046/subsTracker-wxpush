@@ -33,6 +33,11 @@ export async function getConfig(env: Env): Promise<Config> {
       adminPassword: config.ADMIN_PASSWORD || 'password',
       jwtSecret: jwtSecret,
       timezone: config.TIMEZONE || 'UTC',
+      reminderTimes: (config.REMINDER_TIMES || '')
+        .toString()
+        .split(',')
+        .map((s: string) => s.trim())
+        .filter((s: string) => s.length > 0),
       showLunarGlobal: config.SHOW_LUNAR === true,
       enabledNotifiers: config.ENABLED_NOTIFIERS || ['notifyx'],
       

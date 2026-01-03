@@ -47,8 +47,20 @@ export default {
   async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
     const config = await getConfig(env);
     const timezone = config.timezone || 'UTC';
-    const currentTime = getCurrentTimeInTimezone(timezone);
-    console.log('[Workers] 定时任务触发 UTC:', new Date().toISOString(), timezone + ':', currentTime.toLocaleString('zh-CN', {timeZone: timezone}));
+    const now = new Date();
+    const dtf = new Intl.DateTimeFormat('zh-CN', {
+      timeZone: timezone,
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    const parts = dtf.formatToParts(now);
+    const get = (type: string) => parts.find(x => x.type === type)?.value || '00';
+    const hhmm = `${get('hour')}:${get('minute')}`;
+    const times = (config.reminderTimes && config.reminderTimes.length > 0) ? config.reminderTimes : ['08:00'];
+    if (!times.includes(hhmm)) {
+      return;
+    }
     
     const subscriptionService = new SubscriptionService(env);
     const { notifications } = await subscriptionService.checkExpiringSubscriptions();
@@ -275,13 +287,14 @@ async function handleApiRequest(request: Request, env: Env): Promise<Response> {
             RESEND_API_KEY: newConfig.RESEND_API_KEY || '',
             EMAIL_FROM: newConfig.EMAIL_FROM || '',
             EMAIL_FROM_NAME: newConfig.EMAIL_FROM_NAME || '',
-            EMAIL_TO: newConfig.EMAIL_TO || '',
-            BARK_DEVICE_KEY: newConfig.BARK_DEVICE_KEY || '',
-            BARK_SERVER: newConfig.BARK_SERVER || 'https://api.day.app',
-            BARK_IS_ARCHIVE: newConfig.BARK_IS_ARCHIVE || 'false',
-            ENABLED_NOTIFIERS: newConfig.ENABLED_NOTIFIERS || ['notifyx'],
-            TIMEZONE: newConfig.TIMEZONE || currentRawConfig.TIMEZONE || 'UTC'
-        };
+        EMAIL_TO: newConfig.EMAIL_TO || '',
+        BARK_DEVICE_KEY: newConfig.BARK_DEVICE_KEY || '',
+        BARK_SERVER: newConfig.BARK_SERVER || 'https://api.day.app',
+        BARK_IS_ARCHIVE: newConfig.BARK_IS_ARCHIVE || 'false',
+        ENABLED_NOTIFIERS: newConfig.ENABLED_NOTIFIERS || ['notifyx'],
+        TIMEZONE: newConfig.TIMEZONE || currentRawConfig.TIMEZONE || 'UTC',
+        REMINDER_TIMES: newConfig.REMINDER_TIMES || currentRawConfig.REMINDER_TIMES || ''
+      };
         
         if (newConfig.ADMIN_PASSWORD) {
             updatedConfig.ADMIN_PASSWORD = newConfig.ADMIN_PASSWORD;

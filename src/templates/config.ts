@@ -61,10 +61,10 @@ export const configPage = `
             <i class="fas fa-sign-out-alt mr-1"></i>退出登录
           </a>
         </div>
+        </div>
       </div>
-    </div>
-  </nav>
-  
+    </nav>
+    
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="bg-white rounded-lg shadow-md p-6">
       <h2 class="text-2xl font-bold text-gray-800 mb-6">系统配置</h2>
@@ -124,6 +124,11 @@ export const configPage = `
             <option value="Pacific/Auckland">奥克兰时间（UTC+12）</option>
           </select>
             <p class="mt-1 text-sm text-gray-500">选择需要使用时区，计算到期日期</p>
+          </div>
+          <div class="mb-6">
+            <label for="reminderTimes" class="block text-sm font-medium text-gray-700 mb-1">每日提醒时段</label>
+            <input type="text" id="reminderTimes" placeholder="08:00,12:00,18:00" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+            <p class="mt-1 text-sm text-gray-500">按 HH:mm 输入多个时段，使用逗号分隔</p>
           </div>
         </div>
 
@@ -469,6 +474,7 @@ export const configPage = `
 
         // 初始化时区选择
         initTimezoneSelect(config.TIMEZONE || 'UTC');
+        document.getElementById('reminderTimes').value = (config.REMINDER_TIMES || '').toString();
 
         const enabledNotifiers = config.ENABLED_NOTIFIERS || ['notifyx'];
         document.querySelectorAll('input[name="enabledNotifiers"]').forEach(checkbox => {
@@ -619,7 +625,8 @@ export const configPage = `
         BARK_DEVICE_KEY: document.getElementById('barkDeviceKey').value.trim(),
         BARK_IS_ARCHIVE: document.getElementById('barkIsArchive').checked.toString(),
         ENABLED_NOTIFIERS: enabledNotifiers,
-        TIMEZONE: document.getElementById('timezone').value.trim()
+        TIMEZONE: document.getElementById('timezone').value.trim(),
+        REMINDER_TIMES: document.getElementById('reminderTimes').value.trim()
       };
 
       const passwordField = document.getElementById('adminPassword');

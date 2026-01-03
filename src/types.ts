@@ -81,6 +81,7 @@ export interface Config {
   adminPassword?: string;
   jwtSecret?: string;
   timezone?: string;
+  reminderTimes?: string[];
   showLunarGlobal?: boolean;
   enabledNotifiers: string[];
   telegram?: TelegramConfig;
