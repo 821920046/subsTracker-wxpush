@@ -1,13 +1,18 @@
 {
   "name": "subscription-manager",
   "version": "2.0.0",
-  "description": "订阅管理系统 - 基于CloudFlare Workers",
-  "main": "index.js",
+  "description": "基于 Cloudflare Workers 的全能订阅管理系统。支持多渠道推送（微信/TG/邮件/Bark）、农历循环、费用统计与可视化仪表盘。",
+  "main": "src/worker.ts",
   "keywords": [
     "cloudflare-workers",
-    "subscription-management",
-    "notification",
-    "lunar-calendar"
+    "subscription-tracker",
+    "notification-service",
+    "typescript",
+    "lunar-calendar",
+    "telegram-bot",
+    "wechat-push",
+    "serverless",
+    "kv-storage"
   ],
   "license": "MIT",
   "scripts": {
