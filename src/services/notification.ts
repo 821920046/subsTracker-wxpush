@@ -221,21 +221,18 @@ export async function sendWeNotifyEdgeNotification(title: string, content: strin
         url = base + '/wxsend';
       }
     } catch (e) {
-      // URL 解析失败，回退到旧逻辑
       url = base.endsWith('/wxsend') ? base : base + '/wxsend';
     }
 
-    // 兼容 WeNotify-Edge 的 getParams 逻辑：
-    // 它只从 URL 参数或 Body 中读取参数，不检查 Authorization Header
-    // 因此我们需要把 Token 拼接到 URL 中，或者放入 Body 中
     const tokenStr = config.wenotify.token.trim();
-    const separator = url.includes('?') ? '&' : '?';
-    url += `${separator}token=${encodeURIComponent(tokenStr)}`;
+    const addToken = (u: string) => u + (u.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(tokenStr);
+    const primaryUrl = addToken(url);
+    const altUrl = addToken(base + '/api/wxsend');
 
     const body: any = {
       title: title,
       content: content,
-      token: tokenStr // 双重保险：同时放入 Body
+      token: tokenStr
     };
     if (config.wenotify.userid) {
       body.userid = config.wenotify.userid;
@@ -243,22 +240,31 @@ export async function sendWeNotifyEdgeNotification(title: string, content: strin
     if (config.wenotify.templateId) {
       body.template_id = config.wenotify.templateId;
     }
-    const response = await requestWithRetry(url, {
+    let response = await requestWithRetry(primaryUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // 依然保留 Authorization Header 以防万一
         'Authorization': tokenStr
       },
       body: JSON.stringify(body)
     }, 2, 8000);
     
     if (!response.ok) {
-      const errorText = await response.text();
-      const errorMsg = `HTTP ${response.status}: ${errorText}`;
-      console.error(`[WeNotify Edge] 发送失败: ${errorMsg}`);
-      if (throwOnError) throw new Error(errorMsg);
-      return false;
+      const firstText = await response.text();
+      response = await requestWithRetry(altUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': tokenStr
+        },
+        body: JSON.stringify(body)
+      }, 2, 8000);
+      if (!response.ok) {
+        const secondText = await response.text();
+        const msg = `primary HTTP ${response.status}: ${firstText}; alt HTTP ${response.status}: ${secondText}`;
+        if (throwOnError) throw new Error(msg);
+        return false;
+      }
     }
     return true;
   } catch (error: any) {
