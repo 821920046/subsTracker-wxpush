@@ -346,7 +346,7 @@ export const adminPage = `
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">当天重复提醒时段</label>
             <input type="text" id="dailyReminderTimes" placeholder="08:00,12:00,18:00" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <p class="mt-1 text-xs text-gray-500">仅对该订阅生效，HH:mm，逗号分隔</p>
+            <p class="mt-1 text-xs text-gray-500">仅对该订阅生效，优先级高于全局“每日提醒时段”。格式 HH:mm，多个用逗号分隔</p>
           </div>
           <div class="flex items-end space-x-4 pb-2">
             <div class="flex items-center">
