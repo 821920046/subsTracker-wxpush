@@ -1,5 +1,5 @@
 # SubsTracker-Wxpush
-(Modular TypeScript Version)
+Modular TypeScript Version
 
 基于 Cloudflare Workers 的多渠道订阅管理与通知系统。支持公历/农历订阅管理、多渠道推送（Telegram, NotifyX, WeNotify, 企业微信, 邮件, Bark等）、JWT 鉴权、Web UI 管理。
 
